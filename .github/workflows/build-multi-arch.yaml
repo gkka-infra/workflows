@@ -1,4 +1,4 @@
-name: build
+name: build-multi-arch
 
 # This workflow uses actions that are not certified by GitHub.
 # They are provided by a third-party and are governed by
@@ -7,7 +7,7 @@ name: build
 
 on:
   workflow_dispatch:
-    inputs:
+    inputs: &workflow_inputs
       image-name:
         required: true
         description: "IMAGE NMAE"
@@ -26,22 +26,11 @@ on:
         description: "build platforms"
         type: string
         default: "linux/amd64,linux/arm64"
+
   workflow_call:
-    inputs:
-      image-name:
-        required: true
-        type: string
-      build-context:
-        required: true
-        type: string
-      registry:
-        required: false
-        type: string
-        default: "ghcr.io"
-      platforms:
-        required: false
-        type: string
-        default: "linux/amd64,linux/arm64"
+    inputs: *workflow_inputs
+
+    # If call from other workflow, the secrets are required.
     secrets:
       MY_GITHUB_TOKEN:
         required: true
@@ -104,7 +93,7 @@ jobs:
         if: github.event_name != 'pull_request'
         uses: sigstore/cosign-installer@main
         with:
-          cosign-release: 'v1.13.1'
+          cosign-release: "v1.13.1"
       - name: Check install!
         if: github.event_name != 'pull_request'
         run: cosign version
