@@ -26,6 +26,11 @@ on:
         description: "build platforms"
         type: string
         default: "linux/amd64,linux/arm64"
+      run-cosign:
+        required: false
+        description: "If skip the Cosign steps"
+        type: boolean
+        default: false
 
   workflow_call:
     inputs: *workflow_inputs
@@ -90,12 +95,12 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Install Cosign
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' && ${{inputs.run-cosign}}
         uses: sigstore/cosign-installer@main
         with:
           cosign-release: "v1.13.1"
       - name: Check install!
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' && ${{inputs.run-cosign}}
         run: cosign version
       # Sign the resulting Docker image digest except on PRs.
       # This will only write to the public Rekor transparency log when the Docker
@@ -103,7 +108,7 @@ jobs:
       # transparency data even for private images, pass --force to cosign below.
       # https://github.com/sigstore/cosign
       - name: Sign the published Docker image
-        if: ${{ github.event_name != 'pull_request' }}
+        if: ${{ github.event_name != 'pull_request' }} && ${{inputs.run-cosign}}
         env:
           COSIGN_EXPERIMENTAL: "true"
         # This step uses the identity token to provision an ephemeral certificate
